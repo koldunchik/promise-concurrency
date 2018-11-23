@@ -1,7 +1,5 @@
 "use strict";
 
-let counter = 0;
-
 function makeObject(name, id) {
     return {
         name: name,
@@ -15,7 +13,10 @@ function test() {
     let mapper = (a) => new Promise((resolve) => {
         console.log("Scheduling " + a.name + a.id);
         setTimeout(
-            () => resolve(a.name + a.id),
+            () => {
+                console.log("Resolving:" + a.name + a.id);
+                resolve(a.name + a.id);
+            },
             Math.round(Math.random() * 9000) + 1000
         )
     });
@@ -24,9 +25,9 @@ function test() {
 }
 
 function generateArray() {
-    var n = 100;
-    var arr = [];
-    for (var i = 0; i < n; i++)
+    let n = 100;
+    let arr = [];
+    for (let i = 0; i < n; i++)
         arr.push(
             makeObject(
                 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyzАБВГДЕЁЖЗИКЛМНОПРСТУФХЦЧШЩЪЫЬЭЮЯабвгдеёжзиклмнопрстуфхцчшщъыьэюя'.charAt(i),
@@ -38,12 +39,34 @@ function generateArray() {
 }
 
 function queue(objects, mapper, limit = 10) {
-    Promise.map(objects, function(item) {
-        return mapper(item).then(
-            result => {
-                console.log(++counter + " Completed: " + result);
-            }
+    let promises = [];
+    for (let i = 0; i < objects.length; i++) {
+        promises.push(
+            () => { return mapper(objects[i]) }
         );
-    }, {concurrency: limit});
+    }
 
+    let current = 0;
+    let ret = [];
+
+    function next(index) {
+        if (current > promises.length) {
+            return;
+        }
+
+        return promises[index]().then(function (result) {
+            ret[index] = result;
+            return next(current++);
+        });
+    }
+
+    let list = [];
+
+    for (let i = 0; i < limit; i++) {
+        list.push(next(current++));
+    }
+
+    return Promise.all(list).then(function () {
+        return ret;
+    });
 }
