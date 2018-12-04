@@ -39,12 +39,7 @@ function generateArray() {
 }
 
 function queue(objects, mapper, limit = 10) {
-    let promises = [];
-    for (let i = 0; i < objects.length; i++) {
-        promises.push(
-            () => { return mapper(objects[i]) }
-        );
-    }
+    const promises = objects.map(o => () => mapper(o));
 
     let current = 0;
     let ret = [];
