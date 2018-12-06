@@ -39,6 +39,10 @@ function generateArray() {
 }
 
 function queue(objects, mapper, limit = 10) {
+    if (limit > objects.length) {
+        limit = objects.length;
+    }
+
     const promises = objects.map(o => () => mapper(o));
 
     let current = 0;
